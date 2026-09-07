@@ -14,6 +14,14 @@ interface IEnvConfig {
         email: string;
         password: string;
     },
+    // JWT Configuration
+    jwtConfig: {
+        accessTokenSecret: string;
+        accessTokenMaxAgeMs: number;
+
+        refreshTokenSecret: string;
+        refreshTokenMaxAgeMs: number;
+    },
 }
 
 

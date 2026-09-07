@@ -1,8 +1,12 @@
 import mongoose from "mongoose";
-import { USER_ROLE } from "./auth.constants";
-import { userSchema } from "./auth.model";
+import z from "zod";
 
-type TUser = mongoose.InferRawDocType<typeof userSchema>; 
+import { USER_ROLE } from "./auth.constants";
+import { loginSchema } from "./auth.schema";
+
+
 type TUserRole = typeof USER_ROLE[keyof typeof USER_ROLE];
 
-export type { TUserRole, TUser };
+type TLoginRequestDTO = z.infer<typeof loginSchema>;
+
+export type { TUserRole, TLoginRequestDTO };

@@ -1,4 +1,6 @@
 import IEnvConfig from "./types";
+import { parseStringDurationToMs } from "../utils";
+import { StringValue } from "ms";
 
 const envConfig:IEnvConfig = {
     port: Number(process.env.PORT),
@@ -14,9 +16,19 @@ const envConfig:IEnvConfig = {
         database: process.env.DB_NAME!,
     },
 
+    // Super Admin Configuration
     superAdmin: {
         email: process.env.SUPER_ADMIN_EMAIL!,
         password: process.env.SUPER_ADMIN_PASSWORD!,
+    },
+
+    // JWT Configuration
+    jwtConfig: {
+        accessTokenSecret: process.env.JWT_ACCESS_TOKEN_SECRET!,
+        accessTokenMaxAgeMs: parseStringDurationToMs(process.env.JWT_ACCESS_TOKEN_MAX_AGE as StringValue, "JWT_ACCESS_TOKEN_MAX_AGE"),
+
+        refreshTokenSecret: process.env.JWT_REFRESH_TOKEN_SECRET!,
+        refreshTokenMaxAgeMs: parseStringDurationToMs(process.env.JWT_REFRESH_TOKEN_MAX_AGE as StringValue, "JWT_REFRESH_TOKEN_MAX_AGE"),
     },
 
 }
