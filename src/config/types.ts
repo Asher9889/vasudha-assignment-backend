@@ -1,6 +1,15 @@
 interface IEnvConfig {
     port: number;
-    nodeEnv: string;    
+    nodeEnv: string;  
+    
+    mongodbConnectionString: string;
+    mongoDBConfig: {
+        host: string;
+        port: number;
+        username: string;
+        password: string;
+        database: string;
+    },
 }
 
 
