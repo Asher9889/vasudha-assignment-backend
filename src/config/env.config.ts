@@ -14,6 +14,10 @@ const envConfig:IEnvConfig = {
         database: process.env.DB_NAME!,
     },
 
+    superAdmin: {
+        email: process.env.SUPER_ADMIN_EMAIL!,
+        password: process.env.SUPER_ADMIN_PASSWORD!,
+    },
 
 }
 

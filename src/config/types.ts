@@ -10,6 +10,10 @@ interface IEnvConfig {
         password: string;
         database: string;
     },
+    superAdmin: {
+        email: string;
+        password: string;
+    },
 }
 
 
