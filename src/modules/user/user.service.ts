@@ -1,9 +1,9 @@
-import { TCreateUserPayload } from "./user.types";
+import { TCreateUserPayload, TUpdateAccountStatusPayload } from "./user.types";
 import UserModel from "./user.model";
 import { ApiError } from "../../utils";
 import { StatusCodes } from "http-status-codes";
 import { eventBus } from "../../events";
-import { USER_EVENTS } from "./user.constant";
+import { USER_EVENTS, USER_ROLE, ACCOUNT_STATUS } from "./user.constant";
 class UserService {
 
     createUser = async (userData: TCreateUserPayload) => {
@@ -29,6 +29,29 @@ class UserService {
         } catch (error) {
             throw error; 
         }
+    }
+
+    updateAccountStatus = async (userId: string, payload: TUpdateAccountStatusPayload) => {
+        const { accountStatus } = payload;
+
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            throw new ApiError(StatusCodes.NOT_FOUND, "User not found.");
+        }
+
+        if (user.role !== USER_ROLE.ADMIN) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, "Only admin accounts can be enabled or disabled.");
+        }
+
+        if (user.accountStatus === accountStatus) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, `Admin account is already ${accountStatus === ACCOUNT_STATUS.ACTIVE ? "active" : "inactive"}.`);
+        }
+
+        user.accountStatus = accountStatus;
+        await user.save();
+
+        let { _id, password, ...rest } = user.toObject();
+        return { id: _id.toString(), ...rest };
     }
 }
 

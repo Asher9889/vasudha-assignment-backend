@@ -6,6 +6,7 @@ declare global {
     interface Request {
       validatedBody: unknown;
       validatedUser: IUser;
+      validatedParams: unknown;
     }
   }
 }

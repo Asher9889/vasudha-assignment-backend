@@ -1,6 +1,8 @@
 import z from "zod";
+import mongoose from "mongoose";
 import { USER_ROLE } from "./user.types";
 import { ACCOUNT_STATUS } from "./user.constant";
+
 
 const createUserSchema = z.object({
   email: z.email({ message: "Invalid email address" }),
@@ -9,4 +11,13 @@ const createUserSchema = z.object({
   accountStatus: z.enum(Object.values(ACCOUNT_STATUS), { message: `Valid values are: ${Object.values(ACCOUNT_STATUS).join(", ")}` }).default(ACCOUNT_STATUS.ACTIVE),
 });
 
-export { createUserSchema };
+const updateAccountStatusSchema = z.object({
+  accountStatus: z.enum(Object.values(ACCOUNT_STATUS), { message: `Valid values are: ${Object.values(ACCOUNT_STATUS).join(", ")}` }),
+});
+
+const objectIdParamSchema = z.object({
+    id: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), { message: "Please provide a valid ID" }),
+});
+
+
+export { createUserSchema, updateAccountStatusSchema, objectIdParamSchema };
