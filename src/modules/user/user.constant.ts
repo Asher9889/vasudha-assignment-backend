@@ -3,9 +3,16 @@ const USER_ROLE = {
     ADMIN: "ADMIN",
 } as const;
 
-const ACCOUNT_STATUS =  {
-  ACTIVE: "ACTIVE",
-  INACTIVE: "INACTIVE",
+const ACCOUNT_STATUS = {
+    ACTIVE: "ACTIVE",
+    INACTIVE: "INACTIVE",
 } as const;
 
-export { USER_ROLE, ACCOUNT_STATUS };
+const USER_EVENTS = {
+    USER: {
+        CREATED: "USER_CREATED",
+        UPDATED: "USER_UPDATED",
+    }
+} as const
+
+export { USER_ROLE, ACCOUNT_STATUS, USER_EVENTS };

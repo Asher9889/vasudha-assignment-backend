@@ -1,8 +1,11 @@
 import { USER_ROLE, ACCOUNT_STATUS } from "./user.constant";
+import { createUserSchema } from "./user.schema";
+import z from "zod";
 
 type TUserRole = typeof USER_ROLE[keyof typeof USER_ROLE];
 type TAccountStatus = typeof ACCOUNT_STATUS[keyof typeof ACCOUNT_STATUS];
 
+type TCreateUserPayload = z.infer<typeof createUserSchema>;
 
-export type { TUserRole, TAccountStatus };
+export type { TUserRole, TAccountStatus, TCreateUserPayload };
 export { USER_ROLE };

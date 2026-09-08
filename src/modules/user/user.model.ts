@@ -37,6 +37,15 @@ userSchema.methods.generateTokens = function(data: {id: string, role: string}){
 }
  
 
+userSchema.pre("save", async function () {
+    if (!this.isModified("password")) {
+        return;
+    }
+
+    this.password = await argon2.hash(this.password);
+});
+
+
 
 const UserModel = mongoose.model<IUser>("User", userSchema, "users");
 

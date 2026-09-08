@@ -1,7 +1,7 @@
 interface IEnvConfig {
     port: number;
-    nodeEnv: string;  
-    
+    nodeEnv: string;
+
     mongodbConnectionString: string;
     mongoDBConfig: {
         host: string;
@@ -22,6 +22,20 @@ interface IEnvConfig {
         refreshTokenSecret: string;
         refreshTokenMaxAgeMs: number;
     },
+    //Redis Configuration
+    redis: {
+        host: string;
+        port: string;
+        password: string;
+    },
+    //nodeMailer Configuration
+    nodemailer: {
+        smtpHost: string;
+        smtpPort: number;
+        smtpUser: string;
+        smtpPass: string;
+        smtpSecure: boolean;
+    }
 }
 
 
