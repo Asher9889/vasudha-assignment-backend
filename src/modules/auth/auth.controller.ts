@@ -35,11 +35,22 @@ class AuthController {
             if (!refreshToken) {
                 return ApiResponse.error(res, StatusCodes.BAD_REQUEST, "Unauthorized", StatusCodes.UNAUTHORIZED);
             }
-            // const { tokens, user } = await this.authService.refresh(refreshToken);
-          
-            // res.cookie("accessToken", tokens.accessToken, this.cookieOptions);
-            // res.cookie("refreshToken", tokens.refreshToken, this.cookieOptions);
+            const { tokens } = await this.authService.refresh(refreshToken);
+
+            res.cookie("accessToken", tokens.accessToken, this.cookieOptions);
+            res.cookie("refreshToken", tokens.refreshToken, this.cookieOptions);
             return ApiResponse.success(res, StatusCodes.OK, "Both tokens updated successfully");
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    getMe = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const id = req.validatedUser._id.toString();
+
+            const user = await this.authService.getMe(id);
+            return ApiResponse.success(res, StatusCodes.OK, "User fetched successfully", user);
         } catch (error) {
             return next(error);
         }

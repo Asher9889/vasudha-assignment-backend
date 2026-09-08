@@ -6,7 +6,7 @@ import { envConfig } from "../config";
 import { TAccessTokenPayload } from "../modules/auth";
 import mongoose from "mongoose";
 import { logger } from "../config";
-import { UserModel } from "../modules/user";
+import { UserModel, ACCOUNT_STATUS } from "../modules/user";
 
 
 async function authenticate(req: Request, res: Response, next: NextFunction) {
@@ -36,6 +36,10 @@ async function authenticate(req: Request, res: Response, next: NextFunction) {
 
         if (!user) {
             throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: User not found");
+        }
+
+        if (user.accountStatus !== ACCOUNT_STATUS.ACTIVE) {
+            throw new ApiError(StatusCodes.UNAUTHORIZED, "Unauthorized: Account is inactive");
         }
 
         req.validatedUser = user;

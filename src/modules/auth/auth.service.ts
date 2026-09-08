@@ -1,7 +1,10 @@
-import { TLoginRequestDTO } from "./auth.types";
+import jwt, { JwtPayload } from "jsonwebtoken";
+import { StatusCodes } from "http-status-codes";
+import { envConfig } from "../../config";
+
+import { TLoginRequestDTO, TRefreshTokenPayload, generateJWTTokensResponse } from "./auth.types";
 import { UserModel } from "../user";
 import { ApiError } from "../../utils";
-import { StatusCodes } from "http-status-codes";
 
 
 class AuthService {
@@ -33,24 +36,42 @@ class AuthService {
 
     }
 
-    // refresh = async (refresToken: string): Promise<{ tokens: ITokens, user: Record<string, any> }> => {
-    //     try {
-    //         const decodedToken = jwt.verify(refresToken, envConfig.refreshSecret) as JwtPayload & RefreshTokenPayload;
-    //         const user = await AuthModel.findById(decodedToken.id);
-    //         if (!user) {
-    //             throw new ApiError(StatusCodes.UNAUTHORIZED, "User not found. Please login again.");
-    //         }
-    //         const tokens = user.generateTokens({ id: user._id.toString(), role: user.role });
+    refresh = async (refresToken: string): Promise<{ tokens: generateJWTTokensResponse, user: Record<string, any> }> => {
+        try {
+            const decodedToken = jwt.verify(refresToken, envConfig.jwtConfig.refreshTokenSecret) as JwtPayload & TRefreshTokenPayload;
+            const user = await UserModel.findById(decodedToken.id);
+            if (!user) {
+                throw new ApiError(StatusCodes.UNAUTHORIZED, "User not found. Please login again.");
+            }
+            const tokens = user.generateTokens({ id: user._id.toString(), role: user.role });
 
-    //         const userObj = user.toObject();
-    //         const { _id, password, ...rest } = userObj;
-    //         const safeUser = { id: _id.toString(), ...rest };
+            const userObj = user.toObject();
+            const { _id, password, ...rest } = userObj;
+            const safeUser = { id: _id.toString(), ...rest };
 
-    //         return { tokens, user: safeUser };
-    //     } catch (error) {
-    //         throw error;
-    //     }
-    // }
+            return { tokens, user: safeUser };
+        } catch (error) {
+            throw error;
+        }
+    }
+
+    getMe = async (id: string) => {
+        try {
+            const user = await UserModel.findById(id).select("-password").lean();
+
+            if (!user) {
+                throw new ApiError(
+                    StatusCodes.UNAUTHORIZED,
+                    "User not found. Please login again."
+                );
+            }
+
+            let { _id, password, ...rest } = user;
+            return { id: _id.toString(), ...rest };
+        } catch (error) {
+            throw error;
+        }
+    }
 
 };
 
