@@ -1,12 +1,26 @@
-import mongoose from "mongoose";
 import z from "zod";
 
-import { USER_ROLE } from "./auth.constants";
 import { loginSchema } from "./auth.schema";
+import { TUserRole } from "../user";
 
-
-type TUserRole = typeof USER_ROLE[keyof typeof USER_ROLE];
 
 type TLoginRequestDTO = z.infer<typeof loginSchema>;
 
-export type { TUserRole, TLoginRequestDTO };
+
+type TAccessTokenPayload = {
+    id: string;     
+    role: TUserRole;   
+};
+type TRefreshTokenPayload = {
+    id: string;    
+};
+type generateTokensPayload = TAccessTokenPayload;
+type generateJWTTokensResponse = {
+    accessToken: string;
+    refreshToken: string;
+};
+
+
+
+
+export type { TUserRole, TLoginRequestDTO, TAccessTokenPayload, TRefreshTokenPayload, generateTokensPayload, generateJWTTokensResponse };

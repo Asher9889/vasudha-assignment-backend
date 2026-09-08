@@ -1,5 +1,4 @@
 import express from "express";
-import pinoHttp from "pino-http";
 
 import envConfig from "./config/env.config";
 import logger from "./config/logger";

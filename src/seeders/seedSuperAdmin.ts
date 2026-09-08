@@ -1,15 +1,14 @@
 import argon2 from "argon2";
 import connectMongoDB from "../db/connectMongoDB";
 import { envConfig, logger } from "../config";
-import AuthModel from "../modules/auth/auth.model";
-import { USER_ROLE } from "../modules/auth/auth.constants";
+import { ACCOUNT_STATUS, UserModel, USER_ROLE} from "../modules/user";
 
 async function seedSuperAdmin(): Promise<void> {
     await connectMongoDB();
 
     const { email, password } = envConfig.superAdmin;
 
-    const existingUser = await AuthModel.findOne({ email });
+    const existingUser = await UserModel.findOne({ email });
 
     if (existingUser) {
         logger.info("Super admin already exists");
@@ -18,10 +17,11 @@ async function seedSuperAdmin(): Promise<void> {
 
     const hashedPassword = await argon2.hash(password);
 
-    await AuthModel.create({
+    await UserModel.create({
         email,
         password: hashedPassword,
         role: USER_ROLE.SUPER_ADMIN,
+        accountStatus: ACCOUNT_STATUS.ACTIVE,
     });
 
     logger.info("Super admin seeded successfully");

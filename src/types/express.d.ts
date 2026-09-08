@@ -1,5 +1,11 @@
-declare namespace Express {
-  interface Request {
-    validatedBody: unknown;
+import { IUser } from "../modules/user";
+
+
+declare global {
+  namespace Express {
+    interface Request {
+      validatedBody: unknown;
+      validatedUser: IUser;
+    }
   }
 }

@@ -1,3 +1,5 @@
 import httpLogger from "./http-logger";
+import authenticate from "./authenticate";
+import authorize from "./authorize";
 
-export { httpLogger };
+export { authenticate, authorize, httpLogger };

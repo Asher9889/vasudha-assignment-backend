@@ -6,5 +6,6 @@ import { loginSchema } from "./auth.schema";
 const router = express.Router();
 
 router.post("/login", schemaValidate(loginSchema), authController.login);
- 
+
+
 export default router;
