@@ -8,6 +8,7 @@ import DatasetModel from "./dataset.model";
 import path from "node:path";
 import DatasetRowModel from "./dataset-row.model";
 import { DATASET_STATUS } from "./dataset.constants";
+import { USER_ROLE } from "../user";
 
 
 class DatasetService {
@@ -42,10 +43,14 @@ class DatasetService {
         }
     };
 
-    getAllDatasets = async (query: TGetAllDatasetsQueryDTO) => {
+    getAllDatasets = async (query: TGetAllDatasetsQueryDTO, role: string, userId: string) => {
         try {
             const { page, limit, domain, status, search, sortBy, sortOrder } = query;
             const filter: Record<string, unknown> = {};
+
+            if (role === USER_ROLE.ADMIN) {
+                filter.uploadedBy = new mongoose.Types.ObjectId(userId);
+            }
 
             if (domain) filter.domain = domain;
             if (status) filter.status = status;

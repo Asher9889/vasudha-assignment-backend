@@ -38,7 +38,8 @@ class DatasetController {
     getAllDatasets = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const query = req.validatedQuery as TGetAllDatasetsQueryDTO;
-            const result = await this.datasetService.getAllDatasets(query);
+            const user = req.validatedUser;
+            const result = await this.datasetService.getAllDatasets(query, user.role, user._id.toString());
             return ApiResponse.success(res, StatusCodes.OK, "Datasets fetched successfully", result);
         } catch (error) {
             return next(error);

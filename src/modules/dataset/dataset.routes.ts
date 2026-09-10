@@ -7,7 +7,7 @@ import { USER_ROLE } from "../user";
 
 const router = express.Router();
 
-router.get("/", queryValidate(getAllDatasetsQuerySchema), datasetController.getAllDatasets);
+router.get("/", authenticate, queryValidate(getAllDatasetsQuerySchema), datasetController.getAllDatasets);
 router.get("/:id", paramsValidate(datasetIdParamSchema), datasetController.getDatasetById);
 router.post("/upload", upload.single("file"), datasetController.uploadCsv);
 router.post("/", schemaValidate(createDatasetSchema), datasetController.createDataset);
