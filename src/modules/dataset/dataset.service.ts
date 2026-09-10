@@ -99,6 +99,57 @@ class DatasetService {
         }
     };
 
+    getPublicDatasets = async (query: TGetAllDatasetsQueryDTO) => {
+        try {
+            const { page, limit, domain, search, sortBy, sortOrder } = query;
+            const filter: Record<string, unknown> = { status: DATASET_STATUS.APPROVED };
+
+            if (domain) filter.domain = domain;
+            if (search) filter.title = { $regex: search, $options: "i" };
+
+            const skip = (page - 1) * limit;
+            const sort: Record<string, 1 | -1> = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+            const [datasets, total] = await Promise.all([
+                DatasetModel.find(filter).sort(sort).skip(skip).limit(limit).lean(),
+                DatasetModel.countDocuments(filter),
+            ]);
+
+            return {
+                datasets: datasets.map(({ _id, ...rest }) => ({ id: _id.toString(), ...rest })),
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                },
+            };
+        } catch (error: unknown) {
+            if (error instanceof ApiError) throw error;
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to fetch public datasets: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    };
+
+    getPublicDatasetById = async (id: string) => {
+        try {
+            const dataset = await DatasetModel.findById(id).lean();
+            if (!dataset || dataset.status !== DATASET_STATUS.APPROVED) {
+                throw new ApiError(StatusCodes.NOT_FOUND, "Dataset not found");
+            }
+
+            const rows = await DatasetRowModel.find({ datasetId: dataset._id }).sort({ rowIndex: 1 }).lean();
+            const { _id, ...rest } = dataset;
+            return {
+                id: _id.toString(),
+                ...rest,
+                rows: rows.map((row) => ({ rowIndex: row.rowIndex, data: row.data })),
+            };
+        } catch (error: unknown) {
+            if (error instanceof ApiError) throw error;
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to fetch public dataset: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    };
+
     updateDatasetStatus = async (id: string, body: TUpdateDatasetStatusDTO, approvedBy: string) => {
         try {
             const { status, rejectionReason } = body;

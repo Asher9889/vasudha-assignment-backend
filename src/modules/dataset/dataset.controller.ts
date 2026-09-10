@@ -56,6 +56,26 @@ class DatasetController {
         }
     }
 
+    getPublicDatasets = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const query = req.validatedQuery as TGetAllDatasetsQueryDTO;
+            const result = await this.datasetService.getPublicDatasets(query);
+            return ApiResponse.success(res, StatusCodes.OK, "Public datasets fetched successfully", result);
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    getPublicDatasetById = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { id } = req.validatedParams as { id: string };
+            const dataset = await this.datasetService.getPublicDatasetById(id);
+            return ApiResponse.success(res, StatusCodes.OK, "Public dataset fetched successfully", dataset);
+        } catch (error) {
+            return next(error);
+        }
+    }
+
     updateDatasetStatus = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { id } = req.validatedParams as { id: string };
