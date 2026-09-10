@@ -14,7 +14,7 @@ connectMongoDB();
 
 const app = express();
 
-const allowedOrigins = ["http://localhost:5173", ]; 
+const allowedOrigins = ["http://localhost:5173", "https://vasudha.saurabhkushwaha.in" ]; 
 
 app.use(cors({
   origin: function (origin, callback) {
