@@ -7,6 +7,7 @@ declare global {
       validatedBody: unknown;
       validatedUser: IUser;
       validatedParams: unknown;
+      validatedQuery: unknown;
     }
   }
 }

@@ -16,6 +16,7 @@ class AuthController {
     login = async (req: Request, res: Response, next: NextFunction) => {
         try {
             const { email, password } = req.validatedBody as TLoginRequestDTO;
+            console.log("Validated Body:", req.validatedBody); // Debugging line
 
             const tokens = await this.authService.login({ email, password });
 
@@ -51,6 +52,16 @@ class AuthController {
 
             const user = await this.authService.getMe(id);
             return ApiResponse.success(res, StatusCodes.OK, "User fetched successfully", user);
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    logout = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            res.clearCookie("accessToken", this.cookieOptions);
+            res.clearCookie("refreshToken", this.cookieOptions);
+            return ApiResponse.success(res, StatusCodes.OK, "Logged out successfully");
         } catch (error) {
             return next(error);
         }

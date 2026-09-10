@@ -1,6 +1,6 @@
 import IEnvConfig from "./types";
-import { parseStringDurationToMs } from "../utils";
 import { StringValue } from "ms";
+import { parseStringDurationToMs } from "../utils";
 
 const envConfig: IEnvConfig = {
     port: Number(process.env.PORT),
@@ -45,6 +45,11 @@ const envConfig: IEnvConfig = {
         smtpUser: process.env.SMTP_USER!,
         smtpPass: process.env.SMTP_PASS!,
         smtpSecure: process.env.SMTP_SECURE === "true"
+    },
+    // Multer Configuration
+    multer: {
+        fileSizeLimit: Number(process.env.MULTER_FILE_SIZE_LIMIT) * 1024 * 1024, // Convert MB to bytes
+        fileType: process.env.MULTER_FILE_TYPE!,
     }
 
 }

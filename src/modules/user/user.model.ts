@@ -18,7 +18,7 @@ export interface IUser extends mongoose.Document {
 }
 
 export const userSchema = new mongoose.Schema<IUser>({
-    email: { type: String, required: true },
+    email: { type: String, required: true, lowercase: true },
     password: { type: String, required: true },
     role: { type: String, enum: Object.values(USER_ROLE), required: true },
     accountStatus: { type: String, enum: Object.values(ACCOUNT_STATUS), default: ACCOUNT_STATUS.ACTIVE, required: true },

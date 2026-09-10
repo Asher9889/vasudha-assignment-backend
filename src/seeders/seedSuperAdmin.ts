@@ -1,4 +1,3 @@
-import argon2 from "argon2";
 import connectMongoDB from "../db/connectMongoDB";
 import { envConfig, logger } from "../config";
 import { ACCOUNT_STATUS, UserModel, USER_ROLE} from "../modules/user";
@@ -15,11 +14,9 @@ async function seedSuperAdmin(): Promise<void> {
         process.exit(0);
     }
 
-    const hashedPassword = await argon2.hash(password);
-
     await UserModel.create({
         email,
-        password: hashedPassword,
+        password,
         role: USER_ROLE.SUPER_ADMIN,
         accountStatus: ACCOUNT_STATUS.ACTIVE,
     });

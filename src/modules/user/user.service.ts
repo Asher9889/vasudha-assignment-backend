@@ -1,4 +1,4 @@
-import { TCreateUserPayload, TUpdateAccountStatusPayload } from "./user.types";
+import { TCreateUserPayload, TUpdateAccountStatusPayload, TGetAllUsersQuery } from "./user.types";
 import UserModel from "./user.model";
 import { ApiError } from "../../utils";
 import { StatusCodes } from "http-status-codes";
@@ -11,7 +11,7 @@ class UserService {
             const { email, password:ps, role, accountStatus } = userData;
             const user = await UserModel.findOne({ email }).lean();
             if (user) {
-                throw new ApiError(StatusCodes.BAD_REQUEST, "Account already exists. Please login to continue.");
+                throw new ApiError(StatusCodes.BAD_REQUEST, "Account already exists.");
             }
 
             const createdUser = await UserModel.create({
@@ -52,6 +52,42 @@ class UserService {
 
         let { _id, password, ...rest } = user.toObject();
         return { id: _id.toString(), ...rest };
+    }
+
+    getAllUsers = async (query: TGetAllUsersQuery) => {
+        const { page = 1, limit = 20, search, role = USER_ROLE.ADMIN, accountStatus, sortBy = "createdAt", sortOrder = "desc" } = query;
+        const skip = (page - 1) * limit;
+
+        const filter: Record<string, any> = { role };
+
+        if (accountStatus) {
+            filter.accountStatus = accountStatus;
+        }
+
+        if (search) {
+            filter.email = { $regex: search, $options: "i" };
+        }
+
+        const sortField = sortBy === "email" ? "email" : "createdAt";
+        const sortDirection = sortOrder === "asc" ? 1 : -1;
+
+        const [users, total] = await Promise.all([
+            UserModel.find(filter)
+                .select("-password")
+                .sort({ [sortField]: sortDirection })
+                .skip(skip)
+                .limit(limit)
+                .lean(),
+            UserModel.countDocuments(filter),
+        ]);
+
+        const data = users.map(({ _id, password, ...rest }) => ({ id: _id.toString(), ...rest }));
+        const totalPages = Math.ceil(total / limit);
+
+        return {
+            users: data,
+            pagination: { page, limit, total, totalPages },
+        };
     }
 }
 

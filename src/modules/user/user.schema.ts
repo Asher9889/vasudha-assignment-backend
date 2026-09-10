@@ -19,5 +19,15 @@ const objectIdParamSchema = z.object({
     id: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), { message: "Please provide a valid ID" }),
 });
 
+const getAllUsersQuerySchema = z.object({
+    page: z.coerce.number().min(1, { message: "Page must be at least 1" }).default(1),
+    limit: z.coerce.number().min(1, { message: "Limit must be at least 1" }).max(50, { message: "Limit must be at most 50" }).default(20),
+    search: z.string().trim().min(1, { message: "Search must not be empty" }).optional(),
+    role: z.enum(Object.values(USER_ROLE), { message: `Valid values are: ${Object.values(USER_ROLE).join(", ")}` }).default(USER_ROLE.ADMIN),
+    accountStatus: z.enum(Object.values(ACCOUNT_STATUS), { message: `Valid values are: ${Object.values(ACCOUNT_STATUS).join(", ")}` }).optional(),
+    sortBy: z.enum(["createdAt", "email"], { message: "Valid values are: createdAt, email" }).default("createdAt"),
+    sortOrder: z.enum(["asc", "desc"], { message: "Valid values are: asc, desc" }).default("desc"),
+});
 
-export { createUserSchema, updateAccountStatusSchema, objectIdParamSchema };
+
+export { createUserSchema, updateAccountStatusSchema, objectIdParamSchema, getAllUsersQuerySchema };

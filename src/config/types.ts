@@ -35,6 +35,11 @@ interface IEnvConfig {
         smtpUser: string;
         smtpPass: string;
         smtpSecure: boolean;
+    },
+    // Multer Configuration
+    multer: {
+        fileSizeLimit: number; // in bytes
+        fileType: string;
     }
 }
 

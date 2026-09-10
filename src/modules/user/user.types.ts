@@ -1,5 +1,5 @@
 import { USER_ROLE, ACCOUNT_STATUS } from "./user.constant";
-import { createUserSchema, updateAccountStatusSchema } from "./user.schema";
+import { createUserSchema, updateAccountStatusSchema, getAllUsersQuerySchema } from "./user.schema";
 import z from "zod";
 
 type TUserRole = typeof USER_ROLE[keyof typeof USER_ROLE];
@@ -7,6 +7,7 @@ type TAccountStatus = typeof ACCOUNT_STATUS[keyof typeof ACCOUNT_STATUS];
 
 type TCreateUserPayload = z.infer<typeof createUserSchema>;
 type TUpdateAccountStatusPayload = z.infer<typeof updateAccountStatusSchema>;
+type TGetAllUsersQuery = z.infer<typeof getAllUsersQuerySchema>;
 
-export type { TUserRole, TAccountStatus, TCreateUserPayload, TUpdateAccountStatusPayload };
+export type { TUserRole, TAccountStatus, TCreateUserPayload, TUpdateAccountStatusPayload, TGetAllUsersQuery };
 export { USER_ROLE };

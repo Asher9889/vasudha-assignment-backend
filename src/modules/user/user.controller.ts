@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import UserService from "./user.service";
-import { TCreateUserPayload, TUpdateAccountStatusPayload } from "./user.types";
+import { TCreateUserPayload, TUpdateAccountStatusPayload, TGetAllUsersQuery } from "./user.types";
 import { ApiResponse } from "../../utils";
 import { StatusCodes } from "http-status-codes";
 
@@ -28,6 +28,16 @@ class UserController {
             const body = req.validatedBody as TUpdateAccountStatusPayload;
             const data = await this.userService.updateAccountStatus(id, body);
             return ApiResponse.success(res, StatusCodes.OK, "Admin account status updated successfully", data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    getAllUsers = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const query = req.validatedQuery as TGetAllUsersQuery;
+            const data = await this.userService.getAllUsers(query);
+            return ApiResponse.success(res, StatusCodes.OK, "Users fetched successfully", data);
         } catch (error) {
             next(error);
         }
