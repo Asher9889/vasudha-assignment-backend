@@ -31,6 +31,6 @@ const datasetRowSchema = new mongoose.Schema<IDatasetRow>(
 
 datasetRowSchema.index({ datasetId: 1, rowIndex: 1 }, { unique: true });
 
-const DatasetRowModel = mongoose.model<IDatasetRow>("DatasetRow", datasetRowSchema,"dataset_rows");
+const DatasetRowModel = mongoose.model<IDatasetRow>("DatasetRow", datasetRowSchema, "dataset_rows");
 
 export default DatasetRowModel;

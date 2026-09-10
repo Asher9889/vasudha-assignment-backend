@@ -20,7 +20,10 @@ const storage = multer.diskStorage({
     filename: (req, file, cb) => {
         crypto.randomBytes(16, function (err, raw) {
             if (err) return cb(err, file.fieldname);
-            cb(null, `${file.fieldname}-${raw.toString('hex')}`)
+            const uploadId = `${file.fieldname}-${raw.toString('hex')}.csv`;
+            file.fieldname = uploadId; // Store the uploadId in the request object for later use
+            // req.uploadId = uploadId; // Store the uploadId in the request object for later use
+            cb(null, uploadId)
         })
     },
 });

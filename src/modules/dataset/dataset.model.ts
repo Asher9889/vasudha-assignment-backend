@@ -1,16 +1,19 @@
 import mongoose from "mongoose";
-import { TDatasetDomain, TDatasetVisualizationType, TDatasetStatus, TDatasetColumnType } from "./dataset.types";
-import { DATASET_DOMAINS, DATASET_VISUALIZATION_TYPES, DATASET_STATUS, DATASET_COLUMN_TYPES } from "./dataset.constants";
+import { TDatasetDomain, TDatasetTemplateType, TDatasetChartType, TDatasetStatus, TDatasetColumnType } from "./dataset.types";
+import { DATASET_DOMAINS, DATASET_TEMPLATE_TYPES, DATASET_CHART_TYPES, DATASET_STATUS, DATASET_COLUMN_TYPES } from "./dataset.constants";
 
 
 type TVisualizationConfig = { latitudeColumn: string; longitudeColumn: string; valueColumn: string; }
     | { stateColumn: string; valueColumn: string; }
     | { xAxisColumn: string; valueColumn: string; };
 
+
+
 interface IDataset extends mongoose.Document {
     title: string;
     domain: TDatasetDomain;
-    visualizationType: TDatasetVisualizationType;
+    templateType: TDatasetTemplateType;
+    chartType: TDatasetChartType;
     uploadedBy: mongoose.Types.ObjectId;
     status: TDatasetStatus;
     rejectionReason?: string;
@@ -34,15 +37,21 @@ interface IDataset extends mongoose.Document {
     approvedBy: mongoose.Types.ObjectId | null;
     approvedAt: Date | null;
     publishedAt: Date | null;
-    createdAt: Date;
-    updatedAt: Date;
 }
+
+const csvSchema = new mongoose.Schema({
+    columns: [{
+        name: { type: String, required: true },
+        type: { type: String, enum: Object.values(DATASET_COLUMN_TYPES), required: true },
+    }],
+}, { _id: false });
 
 const datasetSchema = new mongoose.Schema<IDataset>({
     title: { type: String, required: true },
 
     domain: { type: String, enum: Object.values(DATASET_DOMAINS), required: true },
-    visualizationType: { type: String, enum: Object.values(DATASET_VISUALIZATION_TYPES), required: true },
+    templateType: { type: String, enum: Object.values(DATASET_TEMPLATE_TYPES), required: true },
+    chartType: { type: String, enum: Object.values(DATASET_CHART_TYPES), required: true },
     uploadedBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     status: { type: String, enum: Object.values(DATASET_STATUS), default: DATASET_STATUS.PENDING, required: true },
     rejectionReason: { type: String },
@@ -51,12 +60,7 @@ const datasetSchema = new mongoose.Schema<IDataset>({
         mimeType: { type: String, required: true },
         size: { type: Number, required: true },
     },
-    csvSchema: {
-        columns: [{
-            name: { type: String, required: true },
-            type: { type: String, enum: Object.values(DATASET_COLUMN_TYPES), required: true },
-        }],
-    },
+    csvSchema: csvSchema,
 
     visualizationConfig: {
         latitudeColumn: { type: String },

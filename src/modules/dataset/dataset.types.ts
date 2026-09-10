@@ -1,7 +1,10 @@
-import { DATASET_DOMAINS, DATASET_VISUALIZATION_TYPES, DATASET_STATUS, DATASET_COLUMN_TYPES } from "./dataset.constants";
+import z from "zod";
+import { DATASET_DOMAINS, DATASET_TEMPLATE_TYPES, DATASET_STATUS, DATASET_COLUMN_TYPES, DATASET_CHART_TYPES } from "./dataset.constants";
+import { createDatasetSchema, getAllDatasetsQuerySchema, updateDatasetStatusSchema } from "./dataset.schema";
 
 type TDatasetDomain = (typeof DATASET_DOMAINS)[keyof typeof DATASET_DOMAINS];
-type TDatasetVisualizationType = (typeof DATASET_VISUALIZATION_TYPES)[keyof typeof DATASET_VISUALIZATION_TYPES];
+type TDatasetTemplateType = (typeof DATASET_TEMPLATE_TYPES)[keyof typeof DATASET_TEMPLATE_TYPES];
+type TDatasetChartType = (typeof DATASET_CHART_TYPES)[keyof typeof DATASET_CHART_TYPES];
 type TDatasetStatus = (typeof DATASET_STATUS)[keyof typeof DATASET_STATUS];
 type TDatasetColumnType = (typeof DATASET_COLUMN_TYPES)[keyof typeof DATASET_COLUMN_TYPES];
 
@@ -18,6 +21,7 @@ interface WrongRow {
 }
 
 interface ParsedCSV {
+    fileKey: string;
     results: Record<string, unknown>[];
     wrongData: WrongRow[];
     columns: ParsedColumn[];
@@ -26,4 +30,8 @@ interface ParsedCSV {
     wrongCount: number;
 }
 
-export type { TDatasetDomain, TDatasetVisualizationType, TDatasetStatus, TDatasetColumnType, ParsedCSV, ParsedColumn, WrongRow };
+type TCreateDatasetSchemaDTO = z.infer<typeof createDatasetSchema>;
+type TGetAllDatasetsQueryDTO = z.infer<typeof getAllDatasetsQuerySchema>;
+type TUpdateDatasetStatusDTO = z.infer<typeof updateDatasetStatusSchema>;
+
+export type { TCreateDatasetSchemaDTO, TGetAllDatasetsQueryDTO, TUpdateDatasetStatusDTO, TDatasetDomain, TDatasetTemplateType, TDatasetChartType, TDatasetStatus, TDatasetColumnType, ParsedCSV, ParsedColumn, WrongRow };

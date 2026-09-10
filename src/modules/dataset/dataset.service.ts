@@ -1,15 +1,20 @@
 import csvParser from "csv-parser";
 import fs from "node:fs";
+import mongoose from "mongoose";
 import { ApiError } from "../../utils";
 import { StatusCodes } from "http-status-codes";
-import { ParsedColumn, ParsedCSV, TDatasetColumnType, WrongRow } from "./dataset.types";
+import { ParsedColumn, ParsedCSV, TCreateDatasetSchemaDTO, TDatasetColumnType, TGetAllDatasetsQueryDTO, TUpdateDatasetStatusDTO, WrongRow } from "./dataset.types";
+import DatasetModel from "./dataset.model";
+import path from "node:path";
+import DatasetRowModel from "./dataset-row.model";
+import { DATASET_STATUS } from "./dataset.constants";
 
 
 class DatasetService {
 
     uploadCsv = async (file: Express.Multer.File): Promise<ParsedCSV> => {
         try {
-            const { headers, rows } = await this.parseCsv(file.path);
+            const { headers, rows } = await this.parseCsv(file.path); 
 
             this.validateHeaders(headers);
 
@@ -22,6 +27,7 @@ class DatasetService {
             const { validRows, wrongRows } = this.validateRows(headers, columns, rows);
 
             return {
+                fileKey: file.fieldname,
                 results: validRows,
                 wrongData: wrongRows,
                 columns,
@@ -32,13 +38,137 @@ class DatasetService {
         } catch (error: unknown) {
             if (error instanceof ApiError) throw error;
 
-            throw new ApiError(
-                StatusCodes.BAD_REQUEST,
-                `Failed to upload dataset: ${error instanceof Error ? error.message : "Unknown error"}`
-            );
+            throw new ApiError(StatusCodes.BAD_REQUEST, `Failed to upload dataset: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     };
 
+    getAllDatasets = async (query: TGetAllDatasetsQueryDTO) => {
+        try {
+            const { page, limit, domain, status, search, sortBy, sortOrder } = query;
+            const filter: Record<string, unknown> = {};
+
+            if (domain) filter.domain = domain;
+            if (status) filter.status = status;
+            if (search) filter.title = { $regex: search, $options: "i" };
+
+            const skip = (page - 1) * limit;
+            const sort: Record<string, 1 | -1> = { [sortBy]: sortOrder === "asc" ? 1 : -1 };
+
+            const [datasets, total] = await Promise.all([
+                DatasetModel.find(filter).sort(sort).skip(skip).limit(limit).lean(),
+                DatasetModel.countDocuments(filter),
+            ]);
+
+            return {
+                datasets: datasets.map(({ _id, ...rest }) => ({ id: _id.toString(), ...rest })),
+                pagination: {
+                    page,
+                    limit,
+                    total,
+                    totalPages: Math.ceil(total / limit),
+                },
+            };
+        } catch (error: unknown) {
+            if (error instanceof ApiError) throw error;
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to fetch datasets: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    };
+
+    getDatasetById = async (id: string) => {
+        try {
+            const dataset = await DatasetModel.findById(id).lean();
+            if (!dataset) {
+                throw new ApiError(StatusCodes.NOT_FOUND, "Dataset not found");
+            }
+
+            const rows = await DatasetRowModel.find({ datasetId: dataset._id }).sort({ rowIndex: 1 }).lean();
+            const { _id, ...rest } = dataset;
+            return {
+                id: _id.toString(), 
+                ...rest,
+                rows: rows.map((row) => ({ rowIndex: row.rowIndex, data: row.data })),
+            };
+        } catch (error: unknown) {
+            if (error instanceof ApiError) throw error;
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to fetch dataset: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    };
+
+    updateDatasetStatus = async (id: string, body: TUpdateDatasetStatusDTO, approvedBy: string) => {
+        try {
+            const { status, rejectionReason } = body;
+
+            const dataset = await DatasetModel.findById(id).lean();
+            if (!dataset) {
+                throw new ApiError(StatusCodes.NOT_FOUND, "Dataset not found");
+            }
+
+            const update: Record<string, unknown> = { status };
+            if (status === DATASET_STATUS.APPROVED) {
+                update.approvedBy = new mongoose.Types.ObjectId(approvedBy);
+                update.approvedAt = new Date();
+                update.publishedAt = new Date();
+                update.$unset = { rejectionReason: 1 };
+            } else {
+                update.rejectionReason = rejectionReason;
+            }
+
+            const updatedDataset = await DatasetModel.findByIdAndUpdate(id, update, { new: true }).lean();
+
+            const { _id, ...rest } = updatedDataset!;
+            return { id: _id.toString(), ...rest };
+        } catch (error: unknown) {
+            if (error instanceof ApiError) throw error;
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to update dataset status: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    };
+
+    createDataset = async (dataset: TCreateDatasetSchemaDTO) => {
+        try {
+            const { fileKey, ...datasetData } = dataset;
+
+            const isAlreadyExists = await DatasetModel.findOne({ title: datasetData.title });
+            if (isAlreadyExists) {
+                throw new ApiError(StatusCodes.BAD_REQUEST, "Dataset with this title already exists");
+            }
+
+            const filePath = path.join(process.cwd(), "uploads", fileKey);
+            const { headers, rows } = await this.parseCsv(filePath);
+
+            this.validateHeaders(headers);
+
+            if (rows.length === 0) {
+                throw new ApiError(StatusCodes.BAD_REQUEST, "CSV file has no data rows");
+            }
+
+            const columns: ParsedColumn[] = this.inferColumnTypesFromFirstRow(headers, rows[0]!);
+            const { validRows, wrongRows } = this.validateRows(headers, columns, rows);
+
+            const datasetObj = new DatasetModel({
+                ...datasetData,
+                uploadedBy: new mongoose.Types.ObjectId(datasetData.uploadedBy),
+                approvedBy: datasetData.approvedBy ? new mongoose.Types.ObjectId(datasetData.approvedBy) : null,
+            });
+            const savedDataset = await datasetObj.save();
+
+            if (validRows.length > 0) {
+                const rowDocs = validRows.map((row, index) => ({
+                    datasetId: savedDataset._id,
+                    rowIndex: index,
+                    data: this.convertRowTypes(row, columns),
+                }));
+                await DatasetRowModel.insertMany(rowDocs);
+            }
+
+            const { _id, ...rest } = savedDataset.toObject();
+            return { id: _id.toString(), ...rest, wrongRows };
+        } catch (error: unknown) {
+            if (error instanceof ApiError) throw error;
+            throw new ApiError(StatusCodes.BAD_REQUEST, `Failed to create dataset: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    }
+
+ 
     private parseCsv = (filePath: string): Promise<{ headers: string[]; rows: Record<string, unknown>[] }> => {
         return new Promise((resolve, reject) => {
             const headers: string[] = [];
@@ -172,6 +302,25 @@ class DatasetService {
         if (!Number.isNaN(Number(value))) return "NUMBER";
         if (!Number.isNaN(Date.parse(value))) return "DATE";
         return "STRING";
+    };
+
+    private convertRowTypes = (row: Record<string, unknown>, columns: ParsedColumn[]): Record<string, unknown> => {
+        const converted: Record<string, unknown> = {};
+        for (const { name, type } of columns) {
+            const val = String(row[name] ?? "").trim();
+            if (val === "") {
+                converted[name] = null;
+                continue;
+            }
+            if (type === "NUMBER") {
+                converted[name] = Number(val);
+            } else if (type === "DATE") {
+                converted[name] = new Date(val);
+            } else {
+                converted[name] = val;
+            }
+        }
+        return converted;
     };
 }
 
