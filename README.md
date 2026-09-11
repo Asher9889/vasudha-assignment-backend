@@ -25,17 +25,17 @@ REST API for the Vasudha Foundation climate, energy and power data platform. It 
 
 | Requirement | Status |
 | --- | --- |
-| Default Super Admin created at deployment | ✅ via `npm run seed:super-admin` (uses `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` env vars) |
-| Super Admin views all datasets and knows which Admin added each | ✅ `GET /datasets` (super-admin sees all; `uploadedBy` returned) |
-| Super Admin approves / rejects datasets | ✅ `PATCH /datasets/:id/status` |
-| Super Admin creates / manages / enables or disables Admin accounts | ✅ `POST /users`, `GET /users`, `PATCH /users/:id/status` |
-| Admin adds CSV datasets with schema validation and rejection errors | ✅ `POST /datasets/upload` returns detected schema + invalid-row errors; `POST /datasets` |
-| New datasets default to `PENDING` and stay hidden until approved | ✅ Public endpoints filter `status = APPROVED` only |
-| Domain (Climate / Energy / Power) + chart type selection | ✅ `domain`, `templateType`, `chartType`, `visualizationConfig` enforced by schema |
-| Admins only see their own datasets; super-admin sees all | ✅ `GET /datasets` filters by `uploadedBy` for `ADMIN` |
-| Only approved datasets visible publicly | ✅ `GET /datasets/public` and `/public/:id` |
-| Email notification when an Admin account is created | ✅ Bonus — `USER_CREATED` event → BullMQ → SMTP |
-| Forgot / Reset password via secure email link | ✅ Bonus — hashed token, 10-minute expiry, single-use |
+| Default Super Admin created at deployment | via `npm run seed:super-admin` (uses `SUPER_ADMIN_EMAIL` / `SUPER_ADMIN_PASSWORD` env vars) |
+| Super Admin views all datasets and knows which Admin added each | `GET /datasets` (super-admin sees all; `uploadedBy` returned) |
+| Super Admin approves / rejects datasets | `PATCH /datasets/:id/status` |
+| Super Admin creates / manages / enables or disables Admin accounts | `POST /users`, `GET /users`, `PATCH /users/:id/status` |
+| Admin adds CSV datasets with schema validation and rejection errors | `POST /datasets/upload` returns detected schema + invalid-row errors; `POST /datasets` |
+| New datasets default to `PENDING` and stay hidden until approved | Public endpoints filter `status = APPROVED` only |
+| Domain (Climate / Energy / Power) + chart type selection | `domain`, `templateType`, `chartType`, `visualizationConfig` enforced by schema |
+| Admins only see their own datasets; super-admin sees all | `GET /datasets` filters by `uploadedBy` for `ADMIN` |
+| Only approved datasets visible publicly | `GET /datasets/public` and `/public/:id` |
+| Email notification when an Admin account is created | Extra — `USER_CREATED` event → BullMQ → SMTP |
+| Forgot / Reset password via secure email link | Extra — hashed token, 10-minute expiry, single-use |
 
 ## Tech Stack
 
