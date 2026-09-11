@@ -50,6 +50,12 @@ const envConfig: IEnvConfig = {
     multer: {
         fileSizeLimit: Number(process.env.MULTER_FILE_SIZE_LIMIT) * 1024 * 1024, // Convert MB to bytes
         fileType: process.env.MULTER_FILE_TYPE!,
+    },
+
+    // Password Reset Configuration
+    frontendUrl: process.env.FRONTEND_URL!,
+    passwordReset: {
+        tokenTTLMs: Number(process.env.PASSWORD_RESET_TOKEN_TTL_MS) || 10 * 60 * 1000, // default 10 minutes
     }
 
 }

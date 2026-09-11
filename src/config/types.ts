@@ -40,6 +40,11 @@ interface IEnvConfig {
     multer: {
         fileSizeLimit: number; // in bytes
         fileType: string;
+    },
+    // Password Reset Configuration
+    frontendUrl: string;
+    passwordReset: {
+        tokenTTLMs: number; // in milliseconds
     }
 }
 

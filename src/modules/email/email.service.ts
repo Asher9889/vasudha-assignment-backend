@@ -1,6 +1,8 @@
 import { Transporter } from "nodemailer";
 import { TCreateUserPayload } from "../user";
+import { TResetPasswordLinkPayload } from "../password-reset";
 import userCreatedEmailTemplate from "./templates/user-created.template";
+import passwordResetEmailTemplate from "./templates/password-reset.template";
 
 
 class EmailService {
@@ -22,6 +24,19 @@ class EmailService {
             console.error("Error sending welcome email:", error);
         }
 
+    }
+
+    sendPasswordResetEmail = async (payload: TResetPasswordLinkPayload) => {
+        try {
+            await this.transport.sendMail({
+                from: '"Saurabh Kushwaha" <contact@saurabhkushwaha.in>',
+                to: payload.email,
+                subject: "Password Reset Link - Vasudha Foundation",
+                html: passwordResetEmailTemplate(payload),
+            })
+        } catch (error) {
+            console.error("Error sending password reset email:", error);
+        }
     }
 }
 

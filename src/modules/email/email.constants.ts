@@ -3,6 +3,7 @@ const EMAIL_QUEUE = {
 
     JOBS: {
         USER_CREATED: "user_created",
+        PASSWORD_RESET: "password_reset",
     },
 } as const;
 
