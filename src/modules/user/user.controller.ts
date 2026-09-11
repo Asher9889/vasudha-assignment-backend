@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import UserService from "./user.service";
-import { TCreateUserPayload, TUpdateAccountStatusPayload, TGetAllUsersQuery } from "./user.types";
+import { TCreateUserPayload, TUpdateAccountStatusPayload, TUpdateUserPayload, TGetAllUsersQuery } from "./user.types";
 import { ApiResponse } from "../../utils";
 import { StatusCodes } from "http-status-codes";
 
@@ -17,6 +17,17 @@ class UserController {
             const body = req.validatedBody as TCreateUserPayload;
             const data = await this.userService.createUser(body);
             return ApiResponse.success(res, StatusCodes.CREATED, "User created successfully", data);
+        } catch (error) {
+            next(error);
+        }
+    }
+
+    updateUser = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { id } = req.validatedParams as { id: string };
+            const body = req.validatedBody as TUpdateUserPayload;
+            const data = await this.userService.updateUser(id, body);
+            return ApiResponse.success(res, StatusCodes.OK, "Admin account updated successfully", data);
         } catch (error) {
             next(error);
         }

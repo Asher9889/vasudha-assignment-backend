@@ -2,7 +2,7 @@ import { Request, Response, NextFunction } from "express";
 import DatasetService from "./dataset.service";
 import { ApiError, ApiResponse } from "../../utils";
 import { StatusCodes } from "http-status-codes";
-import { TCreateDatasetSchemaDTO, TGetAllDatasetsQueryDTO, TUpdateDatasetStatusDTO } from "./dataset.types";
+import { TCreateDatasetSchemaDTO, TGetAllDatasetsQueryDTO, TUpdateDatasetDTO, TUpdateDatasetStatusDTO } from "./dataset.types";
 
 class DatasetController {
     private readonly datasetService: DatasetService;
@@ -71,6 +71,17 @@ class DatasetController {
             const { id } = req.validatedParams as { id: string };
             const dataset = await this.datasetService.getPublicDatasetById(id);
             return ApiResponse.success(res, StatusCodes.OK, "Public dataset fetched successfully", dataset);
+        } catch (error) {
+            return next(error);
+        }
+    }
+
+    updateDataset = async (req: Request, res: Response, next: NextFunction) => {
+        try {
+            const { id } = req.validatedParams as { id: string };
+            const body = req.validatedBody as TUpdateDatasetDTO;
+            const dataset = await this.datasetService.updateDataset(id, body);
+            return ApiResponse.success(res, StatusCodes.OK, "Dataset updated successfully", dataset);
         } catch (error) {
             return next(error);
         }

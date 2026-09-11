@@ -187,7 +187,104 @@ Creates a new admin or super admin account.
 
 ---
 
-## 3. Update Account Status
+## 3. Edit Admin Account
+
+```
+PATCH /api/v1/users/:id
+```
+
+Updates an **admin** account's email, password, and/or account status. Super admin accounts cannot be edited. At least one field is required.
+
+**Auth Required:** SUPER_ADMIN
+
+**Path Parameters:**
+
+| Param | Type | Description |
+|-------|------|-------------|
+| `id` | string | MongoDB ObjectId of the user |
+
+**Request Body:**
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `email` | string | No | New email address (must be unique) |
+| `password` | string | No | New password, min 6 / max 20 characters (hashed with argon2 via the model hook) |
+| `accountStatus` | enum | No | New status: `ACTIVE` \| `INACTIVE` |
+
+**Example Payload:**
+
+```json
+{
+  "email": "admin.updated@example.com",
+  "password": "NewPass@456"
+}
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Admin account updated successfully",
+  "data": {
+    "id": "664f1a2b3c4d5e6f7a8b9c0d",
+    "email": "admin.updated@example.com",
+    "role": "ADMIN",
+    "accountStatus": "ACTIVE",
+    "createdAt": "2025-06-01T10:30:00.000Z",
+    "updatedAt": "2025-06-16T10:00:00.000Z"
+  }
+}
+```
+
+**Error (400) — empty payload / no fields provided:**
+
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "At least one of email, password, or accountStatus is required for update",
+  "errors": []
+}
+```
+
+**Error (400) — email already in use:**
+
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Account with this email already exists.",
+  "errors": []
+}
+```
+
+**Error (400) — target is not an admin:**
+
+```json
+{
+  "success": false,
+  "statusCode": 400,
+  "message": "Only admin accounts can be edited.",
+  "errors": []
+}
+```
+
+**Error (404) — user not found:**
+
+```json
+{
+  "success": false,
+  "statusCode": 404,
+  "message": "User not found.",
+  "errors": []
+}
+```
+
+---
+
+## 4. Update Account Status
 
 ```
 PATCH /api/v1/users/:id/status

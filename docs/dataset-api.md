@@ -515,15 +515,114 @@ curl -X GET http://localhost:3000/api/v1/datasets/64f1a2b3c4d5e6f78901234
 
 ---
 
-## 5. Update Dataset Status
+## 5. Edit Dataset (Super Admin)
+
+```
+PATCH /api/v1/datasets/:id
+```
+
+Updates metadata of a dataset record. Intended for the **SUPER_ADMIN** to edit datasets submitted by any Admin (title, domain, template type, chart type, and/or visualization config). Row data is not modified. At least one field is required.
+
+**Auth Required:** Yes — `authenticate` + `authorize(SUPER_ADMIN)`
+
+**Path Parameters:**
+
+| Param | Type | Required | Description |
+|-------|------|----------|-------------|
+| `id` | string | **Yes** | Valid MongoDB ObjectId of the dataset |
+
+**Request Body** (all fields optional, at least one required):
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `title` | string | New title (max 255 chars) |
+| `domain` | string | `CLIMATE` \| `ENERGY` \| `POWER` |
+| `templateType` | string | `LAT_LONG` \| `STATE_WISE` \| `TIME_SERIES` |
+| `chartType` | string | `BAR` \| `LINE` \| `AREA` \| `INDIA_MAP` \| `STATE_HEATMAP` |
+| `visualizationConfig` | object | Must match the effective `templateType` (new value if provided, otherwise the dataset's current one). Shape requirements are the same as in the create endpoint. |
+
+**Example Request (cURL):**
+
+```bash
+curl -X PATCH http://localhost:3000/api/v1/datasets/64f1a2b3c4d5e6f78901234 \
+  -H "Content-Type: application/json" \
+  -b "accessToken=eyJhbGciOiJIUzI1NiIs..." \
+  -d '{
+    "title": "Renewable Energy Locations (Updated)",
+    "chartType": "AREA",
+    "visualizationConfig": {
+      "latitudeColumn": "latitude",
+      "longitudeColumn": "longitude",
+      "valueColumn": "value"
+    }
+  }'
+```
+
+**Response (200):**
+
+```json
+{
+  "success": true,
+  "statusCode": 200,
+  "message": "Dataset updated successfully",
+  "data": {
+    "id": "64f1a2b3c4d5e6f78901234",
+    "title": "Renewable Energy Locations (Updated)",
+    "domain": "ENERGY",
+    "templateType": "LAT_LONG",
+    "chartType": "AREA",
+    "uploadedBy": "68c1f91a2b3c4d5e6f789012",
+    "status": "PENDING",
+    "file": {
+      "originalName": "renewable-energy.csv",
+      "mimeType": "text/csv",
+      "size": 15432
+    },
+    "csvSchema": {
+      "columns": [
+        { "name": "latitude", "type": "NUMBER" },
+        { "name": "longitude", "type": "NUMBER" },
+        { "name": "value", "type": "NUMBER" }
+      ]
+    },
+    "visualizationConfig": {
+      "latitudeColumn": "latitude",
+      "longitudeColumn": "longitude",
+      "valueColumn": "value"
+    },
+    "rowCount": 4,
+    "approvedBy": null,
+    "approvedAt": null,
+    "publishedAt": null,
+    "createdAt": "2026-09-10T12:00:00.000Z",
+    "updatedAt": "2026-09-11T10:00:00.000Z"
+  }
+}
+```
+
+**Error Responses:**
+
+| Scenario | Status | Message |
+|----------|--------|---------|
+| No/invalid access token | 401 | `Unauthorized: Access token is required` |
+| Not SUPER_ADMIN | 403 | `You are not authorized to perform this action` |
+| Invalid ObjectId param | 400 | `Please provide a valid dataset ID` |
+| Empty payload (no fields) | 400 | `At least one of title, domain, templateType, chartType, or visualizationConfig is required for update` |
+| `visualizationConfig` incompatible with `templateType` | 400 | `visualizationConfig must have ... for {templateType} template` |
+| Dataset not found | 404 | `Dataset not found` |
+| Server error | 500 | `Failed to update dataset: <details>` |
+
+---
+
+## 6. Update Dataset Status
 
 ```
 PATCH /api/v1/datasets/:id/status
 ```
 
-Approves or rejects a dataset. Requires an authenticated admin (`ADMIN` or `SUPER_ADMIN`) via an access-token cookie.
+Approves or rejects a dataset. Requires an authenticated **SUPER_ADMIN** via an access-token cookie.
 
-**Auth Required:** Yes — `authenticate` + `authorize(ADMIN, SUPER_ADMIN)`
+**Auth Required:** Yes — `authenticate` + `authorize(SUPER_ADMIN)`
 
 **Cookies:**
 
@@ -680,13 +779,14 @@ All errors follow this structure:
 
 ## Quick Reference
 
-| Method | Endpoint | Description |
-|--------|----------|-------------|
-| `POST` | `/api/v1/datasets/upload` | Upload and parse a CSV file |
-| `POST` | `/api/v1/datasets` | Create a dataset from uploaded CSV |
-| `GET` | `/api/v1/datasets` | List dataset metadata (paginated) |
-| `GET` | `/api/v1/datasets/:id` | Get a dataset with its row data |
-| `PATCH` | `/api/v1/datasets/:id/status` | Approve or reject a dataset (admin only) |
+| Method | Endpoint | Auth | Description |
+|--------|----------|------|-------------|
+| `POST` | `/api/v1/datasets/upload` | No | Upload and parse a CSV file |
+| `POST` | `/api/v1/datasets` | No | Create a dataset from uploaded CSV |
+| `GET` | `/api/v1/datasets` | Yes* | List dataset metadata (paginated) |
+| `GET` | `/api/v1/datasets/:id` | No | Get a dataset with its row data |
+| `PATCH` | `/api/v1/datasets/:id` | Yes | SUPER_ADMIN — edit a dataset's metadata |
+| `PATCH` | `/api/v1/datasets/:id/status` | Yes | SUPER_ADMIN — approve or reject a dataset |
 
 ---
 
@@ -702,3 +802,4 @@ All errors follow this structure:
 8. Use `GET /datasets` (with `page`/`limit`/`domain`/`status`/`search`) to populate dataset cards or filter lists — each item has an `id` field.
 9. Use `GET /datasets/:id` to fetch the row data for rendering charts — `rows[].data` already has typed values (numbers/dates) ready for charting.
 10. Use `PATCH /datasets/:id/status` for the approve/reject workflow — the browser must send the admin's `accessToken` cookie; rejection requires a `rejectionReason`.
+11. Use `PATCH /datasets/:id` for the super admin to edit a dataset's metadata (title, domain, templateType, chartType, visualizationConfig) — requires a `SUPER_ADMIN` access token and at least one field in the body.

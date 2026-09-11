@@ -1,4 +1,4 @@
-import { TCreateUserPayload, TUpdateAccountStatusPayload, TGetAllUsersQuery } from "./user.types";
+import { TCreateUserPayload, TUpdateAccountStatusPayload, TUpdateUserPayload, TGetAllUsersQuery } from "./user.types";
 import UserModel from "./user.model";
 import { ApiError } from "../../utils";
 import { StatusCodes } from "http-status-codes";
@@ -29,6 +29,38 @@ class UserService {
         } catch (error) {
             throw error; 
         }
+    }
+
+    updateUser = async (userId: string, payload: TUpdateUserPayload) => {
+        const user = await UserModel.findById(userId);
+        if (!user) {
+            throw new ApiError(StatusCodes.NOT_FOUND, "User not found.");
+        }
+
+        if (user.role !== USER_ROLE.ADMIN) {
+            throw new ApiError(StatusCodes.BAD_REQUEST, "Only admin accounts can be edited.");
+        }
+
+        if (payload.email && payload.email !== user.email) {
+            const existing = await UserModel.findOne({ email: payload.email });
+            if (existing && existing._id.toString() !== userId) {
+                throw new ApiError(StatusCodes.BAD_REQUEST, "Account with this email already exists.");
+            }
+            user.email = payload.email;
+        }
+
+        if (payload.password) {
+            user.password = payload.password;
+        }
+
+        if (payload.accountStatus) {
+            user.accountStatus = payload.accountStatus;
+        }
+
+        await user.save();
+
+        let { _id, password, ...rest } = user.toObject();
+        return { id: _id.toString(), ...rest };
     }
 
     updateAccountStatus = async (userId: string, payload: TUpdateAccountStatusPayload) => {

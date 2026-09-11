@@ -3,11 +3,12 @@ import fs from "node:fs";
 import mongoose from "mongoose";
 import { ApiError } from "../../utils";
 import { StatusCodes } from "http-status-codes";
-import { ParsedColumn, ParsedCSV, TCreateDatasetSchemaDTO, TDatasetColumnType, TGetAllDatasetsQueryDTO, TUpdateDatasetStatusDTO, WrongRow } from "./dataset.types";
+import { ParsedColumn, ParsedCSV, TCreateDatasetSchemaDTO, TDatasetColumnType, TGetAllDatasetsQueryDTO, TUpdateDatasetDTO, TUpdateDatasetStatusDTO, WrongRow } from "./dataset.types";
 import DatasetModel from "./dataset.model";
 import path from "node:path";
 import DatasetRowModel from "./dataset-row.model";
-import { DATASET_STATUS } from "./dataset.constants";
+import { DATASET_STATUS, DATASET_TEMPLATE_TYPES } from "./dataset.constants";
+import { validateVisualizationConfigForTemplateType } from "./dataset.schema";
 import { USER_ROLE } from "../user";
 
 
@@ -147,6 +148,42 @@ class DatasetService {
         } catch (error: unknown) {
             if (error instanceof ApiError) throw error;
             throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to fetch public dataset: ${error instanceof Error ? error.message : "Unknown error"}`);
+        }
+    };
+
+    updateDataset = async (id: string, body: TUpdateDatasetDTO) => {
+        try {
+            const { title, domain, templateType, chartType, visualizationConfig } = body;
+
+            const dataset = await DatasetModel.findById(id);
+            if (!dataset) {
+                throw new ApiError(StatusCodes.NOT_FOUND, "Dataset not found");
+            }
+
+            if (title !== undefined) dataset.title = title;
+            if (domain !== undefined) dataset.domain = domain;
+            if (chartType !== undefined) dataset.chartType = chartType;
+
+            if (templateType !== undefined) {
+                dataset.templateType = templateType;
+            }
+
+            if (visualizationConfig !== undefined) {
+                const effectiveTemplateType = templateType ?? dataset.templateType;
+                const result = validateVisualizationConfigForTemplateType(effectiveTemplateType, visualizationConfig);
+                if (!result.valid) {
+                    throw new ApiError(StatusCodes.BAD_REQUEST, result.message);
+                }
+                dataset.visualizationConfig = visualizationConfig;
+            }
+
+            await dataset.save();
+
+            const { _id, ...rest } = dataset.toObject();
+            return { id: _id.toString(), ...rest };
+        } catch (error: unknown) {
+            if (error instanceof ApiError) throw error;
+            throw new ApiError(StatusCodes.INTERNAL_SERVER_ERROR, `Failed to update dataset: ${error instanceof Error ? error.message : "Unknown error"}`);
         }
     };
 

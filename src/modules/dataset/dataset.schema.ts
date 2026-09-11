@@ -33,6 +33,37 @@ const timeSeriesVisualizationConfigSchema = z.object({
     valueColumn: z.string().min(1, { message: "Value column is required" }),
 });
 
+type TVisualizationConfigDTO = z.infer<typeof latLongVisualizationConfigSchema>
+    | z.infer<typeof stateWiseVisualizationConfigSchema>
+    | z.infer<typeof timeSeriesVisualizationConfigSchema>;
+
+const TEMPLATE_CONFIG_REQUIREMENTS = {
+    [DATASET_TEMPLATE_TYPES.LAT_LONG]: "latitudeColumn, longitudeColumn, and valueColumn",
+    [DATASET_TEMPLATE_TYPES.STATE_WISE]: "stateColumn and valueColumn",
+    [DATASET_TEMPLATE_TYPES.TIME_SERIES]: "xAxisColumn and valueColumn",
+} as const;
+
+const validateVisualizationConfigForTemplateType = (
+    templateType: (typeof DATASET_TEMPLATE_TYPES)[keyof typeof DATASET_TEMPLATE_TYPES],
+    visualizationConfig: TVisualizationConfigDTO,
+): { valid: boolean; message: string } => {
+    const schema = templateType === DATASET_TEMPLATE_TYPES.LAT_LONG
+        ? latLongVisualizationConfigSchema
+        : templateType === DATASET_TEMPLATE_TYPES.STATE_WISE
+            ? stateWiseVisualizationConfigSchema
+            : timeSeriesVisualizationConfigSchema;
+
+    const result = schema.safeParse(visualizationConfig);
+    if (result.success) {
+        return { valid: true, message: "" };
+    }
+
+    return {
+        valid: false,
+        message: `visualizationConfig must have ${TEMPLATE_CONFIG_REQUIREMENTS[templateType]} for ${templateType} template`,
+    };
+};
+
 const createDatasetSchema = z.object({
     fileKey: z.string().min(1, { message: "File key is required" }),
     title: z.string().min(1, { message: "Title is required" }).max(255, { message: "Title must be at most 255 characters" }),
@@ -80,6 +111,30 @@ const updateDatasetStatusSchema = z.object({
     }
 });
 
+const updateDatasetSchema = z.object({
+    title: z.string().min(1, { message: "Title is required" }).max(255, { message: "Title must be at most 255 characters" }).optional(),
+    domain: z.enum(Object.values(DATASET_DOMAINS), { message: `Valid domains are: ${Object.values(DATASET_DOMAINS).join(", ")}` }).optional(),
+    templateType: z.enum(Object.values(DATASET_TEMPLATE_TYPES), { message: `Valid template types are: ${Object.values(DATASET_TEMPLATE_TYPES).join(", ")}` }).optional(),
+    chartType: z.enum(Object.values(DATASET_CHART_TYPES), { message: `Valid chart types are: ${Object.values(DATASET_CHART_TYPES).join(", ")}` }).optional(),
+    visualizationConfig: z.union([
+        latLongVisualizationConfigSchema,
+        stateWiseVisualizationConfigSchema,
+        timeSeriesVisualizationConfigSchema,
+    ]).optional(),
+}).superRefine((data, ctx) => {
+    if (!data.title && !data.domain && !data.templateType && !data.chartType && !data.visualizationConfig) {
+        ctx.addIssue({ code: z.ZodIssueCode.custom, message: "At least one of title, domain, templateType, chartType, or visualizationConfig is required for update" });
+        return;
+    }
+
+    if (data.templateType && data.visualizationConfig) {
+        const configResult = validateVisualizationConfigForTemplateType(data.templateType, data.visualizationConfig);
+        if (!configResult.valid) {
+            ctx.addIssue({ code: z.ZodIssueCode.custom, message: configResult.message, path: ["visualizationConfig"] });
+        }
+    }
+});
+
 const datasetIdParamSchema = z.object({
     id: z.string().refine((val) => mongoose.Types.ObjectId.isValid(val), { message: "Please provide a valid dataset ID" }),
 });
@@ -96,10 +151,12 @@ const getAllDatasetsQuerySchema = z.object({
 
 export {
     createDatasetSchema,
+    updateDatasetSchema,
     updateDatasetStatusSchema,
     datasetIdParamSchema,
     getAllDatasetsQuerySchema,
     latLongVisualizationConfigSchema,
     stateWiseVisualizationConfigSchema,
     timeSeriesVisualizationConfigSchema,
+    validateVisualizationConfigForTemplateType,
 };
